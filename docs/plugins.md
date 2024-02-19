@@ -15,7 +15,9 @@ For now there are only a few supported.
 
 - `[[draw]]` Allows you to add an **interactive drawio drawing** to the wiki.  
 - `[[info]]`, `[[warning]]`, `[[danger]]`, `[[success]]` Adds a nice **alert message**.
-- `[[ page: some-page ]]` Allows to show an other page in the current one.
+- `[[ page: some-page ]]` Allows to show another page in the current one.
+- `[[page-name]]` Creates a link to a document on the wiki.
+
 
 ## Adding a plugin
 
