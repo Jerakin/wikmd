@@ -1,15 +1,12 @@
 import pytest
 from wikmd import wiki
-from wikmd.wiki import app
 
 
-@pytest.fixture()
-def client():
-    return app.test_client
-
-
-@pytest.fixture()
-def plugin_manager():
+@pytest.fixture(scope="session")
+def plugin_manager(wiki_path):
+    wiki.cfg.wiki_directory = wiki_path
+    for plugin in wiki.cfg.plugins:
+        wiki.plugin_manager.load_plugin(plugin)
     return wiki.plugin_manager
 
 
@@ -27,7 +24,7 @@ def test_process_md(plugin_manager):
 def test_draw_md(plugin_manager):
     before = "#test this is test\n[[draw]] \n next line"
     md = before
-    md = plugin_manager.broadcast("process_md", md)
+    md = plugin_manager.send("draw", "process_md", md)
     assert md != before
     assert md != ""
 
