@@ -73,7 +73,6 @@ web_deps = get_web_deps(cfg.local_mode, app.logger)
 plugin_manager = PluginManager(
     flask_app=app,
     config=cfg,
-    plugins=cfg.plugins,
     web_deps=web_deps)
 
 wrm = WikiRepoManager(flask_app=app)
@@ -701,6 +700,9 @@ def run_wiki() -> None:
     """Run the wiki as a Flask app."""
     app.logger.info("Starting Wikmd with wiki directory %s",
                     Path(cfg.wiki_directory).resolve())
+
+    for plugin in cfg.plugins:
+        plugin_manager.load_plugin(plugin)
 
     plugin_manager.broadcast("request_html", get_html)
 
