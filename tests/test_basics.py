@@ -110,7 +110,7 @@ def test_bad_file_names():
     """Test for creating files with odd character in names."""
     # Disallowed
     bad_name = "file*with*star"
-    bad_all_bad = '<>:"/\|?*'
+    bad_all_bad = r'<>:"/\|?*'
 
     r = app.test_client().post("/add_new", data={
         "PN": bad_all_bad,
