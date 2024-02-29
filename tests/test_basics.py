@@ -1,27 +1,8 @@
-import os
-from pathlib import Path
 import shutil
 
 import pytest
 from wikmd import wiki
-from wikmd.wiki import app, cfg, setup_wiki_template
-
-
-@pytest.fixture(scope="function", autouse=True)
-def wiki_path(tmp_path: Path):
-    """Sets up the temporary wiki path.
-     autouse=True is needed as this behaves as a setup for the tests.
-    """
-    wiki_path = tmp_path / "wiki"
-    wiki_path.mkdir()
-    cfg.wiki_directory = wiki_path.as_posix()
-    setup_wiki_template()
-    return wiki_path
-
-
-@pytest.fixture()
-def client():
-    return app.test_client
+from wikmd.wiki import app
 
 
 @pytest.fixture(scope="module")
