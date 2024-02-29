@@ -139,25 +139,34 @@ class PageContent:
         This should just be the title but with a suffix.
         """
         p = Path(self._formatted)
+        if p == Path():
+            return p
         return p if p.suffix != "" else p.with_suffix(".md")
 
     @property
-    def file_path(self) -> Path:
-        """The path to the file. This will include the 'wiki' directory."""
-        p = Path(safe_join(cfg.wiki_directory, self._formatted))
+    def file_path(self) -> None | Path:
+        """The path to the file. This will include the 'wiki' directory.
+
+        Returns None if the path is invalid.
+        """
+        p = safe_join(cfg.wiki_directory, self._formatted)
+
+        if p is None:
+            return None
+        p = Path(p)
         return p if p.suffix != "" else p.with_suffix(".md")
 
     def validate(self) -> bool:
         """Validate the page name, add errors to the error list for later retrival."""
-        can_create_page = self.is_new_page is True and self.file_path.exists()
         safe_name = "/".join([secure_filename(part) for part in self.title.split("/")])
+        can_create_page = self.is_new_page is True and self.file_path is not None and not self.file_path.exists()
         filename_is_ok = safe_name == self.title
-        if not can_create_page and filename_is_ok and self.title:  # Early exist
+        if can_create_page and filename_is_ok and self.title:  # Early exist
             return True
 
-        if can_create_page:
-            self.errors.append("A page with that name already exists. "
-                               "The page name needs to be unique.")
+        if not can_create_page:
+            self.errors.append("A page with that name already exists, or "
+                               "the page name contains disallowed characters.")
 
         if not filename_is_ok:
             self.errors.append(f"Page name not accepted. Try using '{safe_name}'.")
