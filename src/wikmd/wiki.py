@@ -70,14 +70,12 @@ logger.setLevel(logging.ERROR)
 web_deps = get_web_deps(cfg.local_mode, app.logger)
 
 # plugins
-plugin_manager = PluginManager(
-    flask_app=app,
-    config=cfg,
-    web_deps=web_deps)
+plugin_manager = PluginManager(config=cfg)
 
-wrm = WikiRepoManager(flask_app=app)
+wrm = WikiRepoManager()
 cache = Cache(cfg.cache_dir)
-im = ImageManager(app, cfg)
+im = ImageManager(cfg)
+
 
 SYSTEM_SETTINGS = {
     "darktheme": False,

@@ -1,7 +1,10 @@
 import importlib
 
-from flask import Flask
 from wikmd.config import WikmdConfig
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PluginManager:
@@ -9,19 +12,16 @@ class PluginManager:
 
     A plugin needs to be a package with a module with the same name.
     """
-    def __init__(self, flask_app: Flask, config: WikmdConfig, web_deps=None):
+    def __init__(self, config: WikmdConfig):
         self.plugins = {}
-
         self.config = config
-        self.flask_app = flask_app
-        self.web_deps = web_deps
 
     def send(self, plugin, slot, data):
         """Send a message to a single plugin and get the result."""
         if plugin not in self.plugins:
             return data
         if slot in dir(self.plugins[plugin]):
-            self.flask_app.logger.info("Plugin %s ran on %s", plugin, slot)
+            logger.info("Plugin %s ran on %s", plugin, slot)
             plugin_obj = self.plugins[plugin]
             data = getattr(plugin_obj, slot)(data)
         return data
@@ -38,4 +38,4 @@ class PluginManager:
     def load_plugin(self, plugin):
         self.plugins[plugin] = (importlib.import_module(
             f"wikmd.plugins.{plugin}.{plugin}", ".")
-                .Plugin(self.flask_app, self.config, self.web_deps))
+                .Plugin(self.config))

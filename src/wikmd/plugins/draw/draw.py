@@ -1,10 +1,8 @@
 import re
 import uuid
 from pathlib import Path
+import logging
 
-
-from flask import Flask
-from wikmd.config import WikmdConfig
 
 default_draw = ('<img title="Click to edit image" onclick="DiagramEditor.editElement(this);" id="" '
                 'src="data:image/png;base64,'
@@ -87,19 +85,18 @@ default_draw = ('<img title="Click to edit image" onclick="DiagramEditor.editEle
                 'kn9JWqEHC8F/KZ6MpKyULFTb9IxxJ1v/Bw2R64jwecc8AAAAAElFTkSuQmCC" '
                 'style="">')
 
+logger = logging.getLogger(__name__)
+
 
 class Plugin:
     @staticmethod
     def import_head():
         return "<script type='text/javascript' src='/static/js/drawio.js'></script>"
 
-    def __init__(self, flask_app: Flask, config: WikmdConfig, web_dep):
+    def __init__(self, config):
         self.name = "DrawIO integration"
         self.plugname = "draw"
-        self.flask_app = flask_app
-        self.config = config
-        self.web_dep = web_dep
-        self.save_location = Path(self.config.wiki_directory) / ".plugin-draw"
+        self.save_location = Path(config.wiki_directory) / ".plugin-draw"
         self.save_location.resolve().mkdir(parents=True, exist_ok=True)
         config.hide_folder_in_wiki.append(".plugin-draw")
 
@@ -128,7 +125,7 @@ class Plugin:
         id_ = request.form['id']
         image = request.form['image']
 
-        self.flask_app.logger.info(f"Plug/{self.name} - changing drawing {id_}")
+        logger.info(f"Plug/{self.name} - changing drawing {id_}")
 
         # look for folder
         location = self.save_location / id_
@@ -143,7 +140,7 @@ class Plugin:
         """
         location = self.save_location / draw_id
         if not location.exists():
-            self.flask_app.logger.info(f"Plug/{self.name} - Could not find file with ID %s", draw_id)
+            logger.info(f"Plug/{self.name} - Could not find file with ID %s", draw_id)
             return ""
 
         with location.open() as fp:
