@@ -7,6 +7,10 @@ from hashlib import sha1
 
 from werkzeug.utils import safe_join, secure_filename
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class ImageManager:
     """
@@ -14,16 +18,15 @@ class ImageManager:
     It can save, optimize and delete images.
     """
 
-    def __init__(self, app, cfg):
-        self.logger = app.logger
+    def __init__(self, cfg):
         self.cfg = cfg
         self.images_path = os.path.join(self.cfg.wiki_directory, self.cfg.images_route)
         self.temp_dir = "/tmp/wikmd/images"
         # Execute the needed programs to check if they are available. Exit code 0 means the programs were executed successfully
-        self.logger.info("Checking if webp is available for image optimization ...")
+        logger.info("Checking if webp is available for image optimization ...")
         self.can_optimize = os.system("cwebp -version") == 0 and os.system("gif2webp -version") == 0
         if not self.can_optimize and self.cfg.optimize_images in ["lossless", "lossy"]:
-            self.logger.error("To use image optimization webp and gif2webp need to be installed and in the $PATH. They could not be found.")
+            logger.error("To use image optimization webp and gif2webp need to be installed and in the $PATH. They could not be found.")
 
     def save_images(self, file):
         """
@@ -53,9 +56,9 @@ class ImageManager:
 
         # We can skip writing the file if it already exists. It is the same file, because it has the same hash
         if os.path.exists(hash_file_path):
-            self.logger.info(f"Image already exists '{img_file.filename}' as '{hash_file_name}'")
+            logger.info(f"Image already exists '{img_file.filename}' as '{hash_file_name}'")
         else:
-            self.logger.info(f"Saving image >>> '{img_file.filename}' as '{hash_file_name}' ...")
+            logger.info(f"Saving image >>> '{img_file.filename}' as '{hash_file_name}' ...")
             shutil.move(temp_file_path, hash_file_path)
 
         return hash_file_name
@@ -87,7 +90,7 @@ class ImageManager:
                         for _caption, image_path in matches:
                             used_images.add(os.path.basename(image_path))
                 except:
-                    self.logger.info(f"ignoring {path}")
+                    logger.info(f"ignoring {path}")
 
         not_used_images = saved_images.difference(used_images)
         for not_used_image in not_used_images:
@@ -95,11 +98,11 @@ class ImageManager:
 
     def delete_image(self, image_name):
         image_path = safe_join(self.images_path, image_name)
-        self.logger.info(f"Deleting file >>> {image_path}")
+        logger.info(f"Deleting file >>> {image_path}")
         try:
             os.remove(image_path)
         except IsADirectoryError | FileNotFoundError:
-            self.logger.error(f"Could not delete '{image_path}'")
+            logger.error(f"Could not delete '{image_path}'")
 
     def __optimize_image(self, temp_file_path_original, content_type):
         """
@@ -112,7 +115,7 @@ class ImageManager:
 
         temp_file_handle, temp_file_path = tempfile.mkstemp()
         if content_type in ["image/gif", "image/png"]:
-            self.logger.info(f"Compressing image lossless ...")
+            logger.info(f"Compressing image lossless ...")
             if content_type == "image/gif":
                 os.system(f"gif2webp -quiet -m 6 {temp_file_path_original} -o {temp_file_path}")
             else:
@@ -121,10 +124,10 @@ class ImageManager:
 
         elif content_type in ["image/jpeg"]:
             if self.cfg.optimize_images == "lossless":
-                self.logger.info(f"Compressing image near lossless ...")
+                logger.info(f"Compressing image near lossless ...")
                 os.system(f"cwebp -quiet -near_lossless -m 6 {temp_file_path_original} -o {temp_file_path}")
             elif self.cfg.optimize_images == "lossy":
-                self.logger.info(f"Compressing image lossy ...")
+                logger.info(f"Compressing image lossy ...")
                 os.system(f"cwebp -quiet -m 6 {temp_file_path_original} -o {temp_file_path}")
             os.remove(temp_file_path_original)
 

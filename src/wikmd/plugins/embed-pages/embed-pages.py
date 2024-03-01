@@ -1,18 +1,12 @@
 import os
 import re
 
-from flask import Flask
-from wikmd.config import WikmdConfig
-
 
 class Plugin:
-    def __init__(self, flask_app: Flask, config: WikmdConfig, web_dep):
+    def __init__(self, config):
         self.name = "embed-pages"
         self.plugname = "embed-pages"
-        self.flask_app = flask_app
-        self.config = config
         self.this_location = os.path.dirname(__file__)
-        self.web_dep = web_dep
 
     def get_plugin_name(self) -> str:
         """
