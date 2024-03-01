@@ -29,6 +29,12 @@ def wiki_file(project_file):
     return f"/{project_file.parent.name}/{project_file.stem}"
 
 
+def sanitize_text(text):
+    """Remove text before and after the relevant page content."""
+    text = text.split(b"</nav>\n    <p><p>")[-1]
+    return text.split(b"</p>\r\n</p>\n")[0]
+
+
 def test_homepage():
     """Homepage renders."""
     rv = app.test_client().get("/")
@@ -36,7 +42,7 @@ def test_homepage():
     assert rv.status_code == 200
 
     # Check if homepage loads
-    assert b"What is it?" in rv.data
+    assert b"What is it?" in sanitize_text(rv.data)
 
 
 def test_list():
@@ -44,7 +50,7 @@ def test_list():
     rv = app.test_client().get("/list/")
 
     assert rv.status_code == 200
-    assert b"Features.md" in rv.data
+    assert b"Features.md" in sanitize_text(rv.data)
 
 
 def test_create_file_in_folder(wiki_file, test_file_content):
@@ -52,8 +58,8 @@ def test_create_file_in_folder(wiki_file, test_file_content):
     rv = app.test_client().get(wiki_file)
 
     assert rv.status_code == 200
-    assert test_file_content[0] in rv.data
-    assert test_file_content[1] in rv.data
+    assert test_file_content[0] in sanitize_text(rv.data)
+    assert test_file_content[1] in sanitize_text(rv.data)
 
 
 def test_search():
@@ -61,16 +67,16 @@ def test_search():
     wiki.setup_search()
     rv = app.test_client().get("/search?q=Features")
     assert rv.status_code == 200
-    assert b"Found" in rv.data
-    assert b"result(s)" in rv.data
-    assert b"Features" in rv.data
+    assert b"Found" in sanitize_text(rv.data)
+    assert b"result(s)" in sanitize_text(rv.data)
+    assert b"Features" in sanitize_text(rv.data)
 
 
 def test_add_new_file(wiki_path):
     """App can create files."""
     rv = app.test_client().get("/add_new")
     assert rv.status_code == 200
-    assert b"content" in rv.data
+    assert b"content" in sanitize_text(rv.data)
 
     # create new file
     app.test_client().post("/add_new", data={
@@ -80,8 +86,8 @@ def test_add_new_file(wiki_path):
 
     # look at file
     rv = app.test_client().get("/testing01234filenotexisting")
-    assert b"testing file" in rv.data
-    assert b"this is a test" in rv.data
+    assert b"testing file" in sanitize_text(rv.data)
+    assert b"this is a test" in sanitize_text(rv.data)
 
     f = wiki_path / "testing01234filenotexisting.md"
     f.unlink()
@@ -133,7 +139,7 @@ def test_new_file_folder(wiki_path):
     """App can create folders."""
     rv = app.test_client().get("/add_new")
     assert rv.status_code == 200
-    assert b"content" in rv.data
+    assert b"content" in sanitize_text(rv.data)
 
     # create new file in a folder
     app.test_client().post("/add_new", data={
@@ -143,8 +149,8 @@ def test_new_file_folder(wiki_path):
 
     # look at file
     rv = app.test_client().get("/testingfolder01234/testing01234filenotexisting")
-    assert b"testing file" in rv.data
-    assert b"this is a test" in rv.data
+    assert b"testing file" in sanitize_text(rv.data)
+    assert b"this is a test" in sanitize_text(rv.data)
 
     f = wiki_path / "testingfolder01234"
     shutil.rmtree(f)
@@ -157,19 +163,19 @@ def test_get_file_after_file_edit(project_file, wiki_file):
 
     rv = app.test_client().get(wiki_file)
     assert rv.status_code == 200
-    assert b"our new content" in rv.data
+    assert b"our new content" in sanitize_text(rv.data)
 
 
 def test_get_file_after_api_edit(wiki_file):
     # Edit the file through API
     app.test_client().post(f"/edit{wiki_file}", data={
-        "PN": wiki_file[1:],
+        "PN": wiki_file,
         "CT": "#testing file\n this is a test",
     })
 
     rv = app.test_client().get(wiki_file)
-    assert b"testing file" in rv.data
-    assert b"this is a test" in rv.data
+    assert b"testing file" in sanitize_text(rv.data)
+    assert b"this is a test" in sanitize_text(rv.data)
 
 
 # edits file in folder using the wiki and check if it is visible in the wiki
@@ -179,4 +185,4 @@ def test_get_edit_page_content(project_file, wiki_file):
 
     rv = app.test_client().get(f"/edit{wiki_file}")
     assert rv.status_code == 200
-    assert b"this is the header" in rv.data
+    assert b"this is the header" in sanitize_text(rv.data)
