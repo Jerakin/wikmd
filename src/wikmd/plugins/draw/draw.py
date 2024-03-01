@@ -100,8 +100,8 @@ class Plugin:
         self.config = config
         self.web_dep = web_dep
         self.save_location = Path(self.config.wiki_directory) / ".plugin-draw"
+        self.save_location.resolve().mkdir(parents=True, exist_ok=True)
         config.hide_folder_in_wiki.append(".plugin-draw")
-        self.save_location.mkdir(exist_ok=True)
 
     def get_plugin_name(self) -> str:
         """

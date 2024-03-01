@@ -53,8 +53,8 @@ HIDDEN_PATHS = (UPLOAD_FOLDER_PATH, GIT_FOLDER_PATH,
 
 _project_folder = Path(__file__).parent
 app = Flask(__name__,
-            template_folder=_project_folder / "templates",
-            static_folder=_project_folder / "static")
+            template_folder=_project_folder / "assets" /"templates",
+            static_folder=_project_folder / "assets" /"static")
 
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER_PATH
@@ -690,11 +690,12 @@ def setup_wiki_template() -> bool:
 
     if not Path(cfg.wiki_directory).exists():
         app.logger.info("Wiki directory doesn't exists, copy template")
-        shutil.copytree(root / "wiki_template", cfg.wiki_directory)
+        shutil.copytree(root / "assets" / "wiki_template", cfg.wiki_directory)
         return True
-    if not any(Path(cfg.wiki_directory).iterdir()):
+    if not any([x for x in Path(cfg.wiki_directory).iterdir() if not x.name.startswith(".")]):
         app.logger.info("Wiki directory is empty, copy template")
-        shutil.copytree(root / "wiki_template", cfg.wiki_directory, dirs_exist_ok=True)
+        shutil.copytree(root / "assets" / "wiki_template",
+                        cfg.wiki_directory, dirs_exist_ok=True)
         return True
     return False
 
