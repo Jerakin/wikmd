@@ -7,7 +7,7 @@ It’s a file-based wiki that aims to simplicity. Instead of storing the data in
 
 To view the documents in the browser, the document is converted to html.
 
-![preview](src/wikmd/static/images/readme-img.png)
+![preview](src/wikmd/assets/static/images/readme-img.png)
 
 ## Features
 
