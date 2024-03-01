@@ -101,8 +101,8 @@ class PageContent:
         self.content = content
         self.errors = []
 
-        self.is_new_page = True
-        """set is_new_page to false we are editing a page rather than creating a new"""
+        self.is_editing = False
+        """set is_editing to true we are editing a page rather than creating a new"""
 
     @classmethod
     def load_from_request(cls: type[PC_T]) -> PC_T:
@@ -149,8 +149,7 @@ class PageContent:
 
         Returns None if the path is invalid.
         """
-        p = safe_join(cfg.wiki_directory, self._formatted)
-
+        p = safe_join(cfg.wiki_directory, *self._formatted.split("/"))
         if p is None:
             return None
         p = Path(p)
@@ -159,12 +158,9 @@ class PageContent:
     def validate(self) -> bool:
         """Validate the page name, add errors to the error list for later retrival."""
         safe_name = "/".join([secure_filename(part) for part in self.title.split("/")])
-        can_create_page = self.is_new_page is True and self.file_path is not None and not self.file_path.exists()
+        can_create_page = self.file_path is not None and not self.file_path.exists()
         filename_is_ok = safe_name == self.title
-        if can_create_page and filename_is_ok and self.title:  # Early exist
-            return True
-
-        if not can_create_page:
+        if self.is_editing is False and not can_create_page:
             self.errors.append("A page with that name already exists, or "
                                "the page name contains disallowed characters.")
 
@@ -173,7 +169,7 @@ class PageContent:
 
         if not self.title:
             self.errors.append("Your page needs a name.")
-        return False
+        return not bool(self.errors)
 
 
 def process(page: PageContent) -> str:
@@ -191,7 +187,6 @@ def process(page: PageContent) -> str:
 def save(page: PageContent) -> None:
     """Get file content from the form and save it."""
     app.logger.info("Saving >>> '%s' ...", page.title)
-
     try:
         page.file_path.parent.mkdir(exist_ok=True)
 
@@ -428,7 +423,6 @@ def add_new_post() -> str | Response:
         return login("/add_new")
     page = PageContent.load_from_request()
 
-    page.is_new_page = True
     if not page.validate():
         return render_template("new.html",
                                form=page,
@@ -472,7 +466,7 @@ def edit_homepage_post() -> str | Response:
         return login("edit/homepage")
 
     page = PageContent.load_from_request()
-    page.is_new_page = False
+    page.is_editing = True
     if not page.validate():
         return render_template(
             "new.html",
@@ -535,7 +529,7 @@ def edit(page_name: str) -> Response | str:
         return login("edit/" + page_name)
 
     page = PageContent.load_from_request()
-    page.is_new_page = False
+    page.is_editing = True
     if not page.validate():
         return render_template(
             "new.html",
@@ -545,7 +539,7 @@ def edit(page_name: str) -> Response | str:
             system=SYSTEM_SETTINGS,
         )
 
-    if page.title != page_name:
+    if page.title[1:] != page_name:
         (Path(cfg.wiki_directory) / page_name).unlink()
 
     save(page)
