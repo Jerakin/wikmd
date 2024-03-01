@@ -67,7 +67,7 @@ app.logger.setLevel(logging.INFO)
 logger = logging.getLogger("werkzeug")
 logger.setLevel(logging.ERROR)
 
-web_deps = get_web_deps(cfg.local_mode, app.logger)
+web_deps = get_web_deps(cfg.local_mode)
 
 # plugins
 plugin_manager = PluginManager(config=cfg)

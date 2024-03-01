@@ -1,6 +1,6 @@
 from collections import namedtuple
 from os import path
-
+import logging
 import requests
 
 WebDependency = namedtuple("WebDependency", ["local", "external"])
@@ -79,21 +79,23 @@ WEB_DEPENDENCIES = {
     )
 }
 
+logger = logging.getLogger(__name__)
 
-def get_web_deps(local_mode, logger):
+
+def get_web_deps(local_mode):
     """
     Returns a dict with dependency_name as key and web_path as value.
     If local_mode: a local copy of the dependency gets served
     Else: a public CDNs gets used to serve those dependencies
     """
     if local_mode:
-        download_web_deps(logger)
+        download_web_deps()
         return {dep: WEB_DEPENDENCIES[dep].local for dep in WEB_DEPENDENCIES}
     else:
         return {dep: WEB_DEPENDENCIES[dep].external for dep in WEB_DEPENDENCIES}
 
 
-def download_web_deps(logger):
+def download_web_deps():
     """
     Downloads the dependencies, if they don't already exist on disk
     """
