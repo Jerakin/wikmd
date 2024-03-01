@@ -88,7 +88,7 @@ SYSTEM_SETTINGS = {
 @app.context_processor
 def inject_file_list() -> dict:
     """Context processor that injects our file list into every call."""
-    return {"file_list": wiki_tree(Path(cfg.wiki_directory))}
+    return {"file_list": wiki_tree(Path(cfg.wiki_directory)), "system": SYSTEM_SETTINGS}
 
 
 class PageContent:
@@ -210,7 +210,6 @@ def search(search_term: str, page: int) -> str:
         current_page=page,
         suggestions=suggestions,
         results=results,
-        system=SYSTEM_SETTINGS,
     )
 
 
@@ -325,7 +324,7 @@ def list_wiki(folderpath: str) -> str:
         "list_files.html",
         list=file_list,
         folder=folderpath,
-        system=SYSTEM_SETTINGS)
+    )
 
 
 @app.get("/search")
@@ -360,7 +359,6 @@ def wiki_page(file_page: str) -> None | str | Response:
         folder="",
         info=html_content,
         modif=mod,
-        system=SYSTEM_SETTINGS,
     )
 
 
@@ -377,7 +375,6 @@ def index() -> None | str | Response:
         return render_template(
             "index.html",
             form=page,
-            system=SYSTEM_SETTINGS,
         )
 
     try:
@@ -393,7 +390,7 @@ def index() -> None | str | Response:
         app.logger.exception("Conversion to HTML failed")
 
     page = PageContent(cfg.homepage_title, html)
-    return render_template("index.html", form=page, system=SYSTEM_SETTINGS)
+    return render_template("index.html", form=page)
 
 
 @app.get("/add_new")
@@ -409,7 +406,6 @@ def add_new_view() -> str | Response:
         upload_path=cfg.images_route,
         image_allowed_mime=cfg.image_allowed_mime,
         form=page,
-        system=SYSTEM_SETTINGS,
     )
 
 
@@ -422,11 +418,12 @@ def add_new_post() -> str | Response:
     page = PageContent.load_from_request()
 
     if not page.validate():
-        return render_template("new.html",
-                               form=page,
-                               upload_path=cfg.images_route,
-                               image_allowed_mime=cfg.image_allowed_mime,
-                               system=SYSTEM_SETTINGS)
+        return render_template(
+            "new.html",
+            form=page,
+            upload_path=cfg.images_route,
+            image_allowed_mime=cfg.image_allowed_mime,
+        )
 
     save(page)
     git_sync_thread = Thread(target=wrm.git_sync, args=(page.title, "Add"))
@@ -452,7 +449,6 @@ def edit_homepage_view() -> str | Response:
         form=page,
         upload_path=cfg.images_route,
         image_allowed_mime=cfg.image_allowed_mime,
-        system=SYSTEM_SETTINGS,
     )
 
 
@@ -471,7 +467,6 @@ def edit_homepage_post() -> str | Response:
             form=page,
             upload_path=cfg.images_route,
             image_allowed_mime=cfg.image_allowed_mime,
-            system=SYSTEM_SETTINGS,
         )
 
     save(page)
@@ -515,7 +510,6 @@ def edit_view(page_name: str) -> Response | str:
         form=page,
         upload_path=cfg.images_route,
         image_allowed_mime=cfg.image_allowed_mime,
-        system=SYSTEM_SETTINGS,
     )
 
 
@@ -534,7 +528,6 @@ def edit(page_name: str) -> Response | str:
             form=page,
             upload_path=cfg.images_route,
             image_allowed_mime=cfg.image_allowed_mime,
-            system=SYSTEM_SETTINGS,
         )
 
     if page.title[1:] != page_name:
@@ -586,14 +579,14 @@ def graph() -> str:
     """Get the knowledge-graph."""
     global links
     links = knowledge_graph.find_links()
-    return render_template("knowledge-graph.html", links=links, system=SYSTEM_SETTINGS)
+    return render_template("knowledge-graph.html", links=links)
 
 
 @app.get("/login")
 def login_view() -> str | Response:
     """Get login view."""
     app.logger.info("Display login page")
-    return render_template("login.html", system=SYSTEM_SETTINGS)
+    return render_template("login.html")
 
 
 @app.post("/login")
